@@ -9,19 +9,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
-//@Controller
+@Controller
 @SessionAttributes("name")
-public class TodoController {
+public class TodoControllerJPA {
 
-    private TodoService todoService;
+    private TodoRepository todoRepository;
 
-    public TodoController(TodoService todoService) {
-        this.todoService = todoService;
+    public TodoControllerJPA(TodoRepository todoRepository) {
+        this.todoRepository = todoRepository;
     }
 
     @RequestMapping("/list-todos")
     public String listAllTodos(ModelMap modelMap){
-        modelMap.put("todos", todoService.findByUsername(getLoggedInUsername()));
+        modelMap.put("todos", todoRepository.findByUserName(getLoggedInUsername()));
         return "listTodos";
     }
 
@@ -37,19 +37,20 @@ public class TodoController {
         if(result.hasErrors()){
             return "todo";
         }
-        todoService.addTodo(getLoggedInUsername(), todo.getDescription(), todo.getTargetDate(), false);
+        todo.setUserName(getLoggedInUsername());
+        todoRepository.save(todo);
         return "redirect:/list-todos";
     }
 
     @RequestMapping("/delete-todo")
     public String deleteTodo(@RequestParam int id){
-        todoService.deleteById(id);
+        todoRepository.deleteById(id);
         return "redirect:list-todos";
     }
 
     @GetMapping("/update-todo")
     public String showUpdateTodoPage(@RequestParam int id, ModelMap modelMap){
-        Todo todo = todoService.findById(id);
+        Todo todo = todoRepository.findById(id).get();
         modelMap.addAttribute("todo", todo);
         return "todo";
     }
@@ -59,9 +60,8 @@ public class TodoController {
         if(result.hasErrors()){
             return "todo";
         }
-        String userName = getLoggedInUsername();
-        todo.setUserName(userName);
-        todoService.updateTodo(todo);
+        todo.setUserName(getLoggedInUsername());
+        todoRepository.save(todo);
         return "redirect:/list-todos";
     }
 
